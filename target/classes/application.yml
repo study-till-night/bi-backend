@@ -1,0 +1,121 @@
+spring:
+  application:
+    name: yubi-backend
+  # 默认 dev 环境
+  profiles:
+    active: dev
+  # 支持 swagger3
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  # session 配置
+  session:
+    # todo 取消注释开启分布式 session（须先配置 Redis）
+    # 30 天过期
+    timeout: 2592000
+    store-type: redis
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/bi_system?allowMultiQueries=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&&rewriteBatchedStatements=true
+    username: root
+    password: 654160
+
+  # Redis 配置
+  redis:
+    #       redis单机配置
+    #      从0-15号数据库中进行选择
+    database: 0
+    host: 192.168.234.128
+    port: 6379
+    password: 654160
+    #      redis连接池
+    lettuce:
+      pool:
+        enabled: true
+        max-active: 4
+        max-wait: -1
+  # Elasticsearch 配置
+  # todo 需替换配置，然后取消注释
+  #  elasticsearch:
+  #    uris: http://localhost:9200
+  #    username: root
+  #    password: 123456
+  # 文件上传
+  servlet:
+    multipart:
+      # 大小限制
+      max-file-size: 10MB
+    #  rabbitmq配置
+  rabbitmq:
+    host: 192.168.234.128
+    port: 5673
+    username: guest
+    password: guest
+    virtual-host: /
+    #    none -- 值是禁用发布确认模式，是默认值
+    #    correlated -- 值是发布消息成功到交换器后会触发回调方法
+    #    simple --  值经测试有两种效果，其一效果和 CORRELATED 值一样会触发回调方法，
+    #    其二在发布消息成功后使用 rabbitTemplate 调用 waitForConfirms 或 waitForConfirmsOrDie 方法等待 broker 节点返回发送结果，
+    #    根据返回结果来判定下一步的逻辑，要注意的点是 waitForConfirmsOrDie 方法如果返回 false 则会关闭 channel，则接下来无法发送消息到 broker;
+    publisher-confirm-type: correlated
+    #    是否允许消息回退
+    publisher-returns: true
+
+server:
+  address: 0.0.0.0
+  port: 8080
+  servlet:
+    context-path: /api
+    # cookie 30 天过期
+    session:
+      cookie:
+        max-age: 2592000
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    log-impl: org.apache.ibatis.logging.log4j2.Log4j2Impl
+  global-config:
+    db-config:
+      logic-delete-field: isDelete # 全局逻辑删除的实体字段名
+      logic-delete-value: 1 # 逻辑已删除值（默认为 1）
+      logic-not-delete-value: 0 # 逻辑未删除值（默认为 0）
+
+#AI 平台配置
+yuapi:
+  client:
+    access-key: aiyhd6ynynz2626grri4p4c2o2s2pmou
+    secret-key: el3gc287u6tq1an9s8fwdsqqg9ixcqgs
+    model-id: 1731632501287768066
+
+
+# 微信相关
+wx:
+  # 微信公众平台
+  # todo 需替换配置
+  mp:
+    token: xxx
+    aesKey: xxx
+    appId: xxx
+    secret: xxx
+    config-storage:
+      http-client-type: HttpClient
+      key-prefix: wx
+      redis:
+        host: 127.0.0.1
+        port: 6379
+      type: Memory
+  # 微信开放平台
+  # todo 需替换配置
+  open:
+    appId: xxx
+    appSecret: xxx
+# 对象存储
+# todo 需替换配置
+cos:
+  client:
+    accessKey: xxx
+    secretKey: xxx
+    region: xxx
+    bucket: xxx
