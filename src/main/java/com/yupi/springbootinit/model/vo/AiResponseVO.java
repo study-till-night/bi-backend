@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class AiResponseVo {
+public class AiResponseVO {
 
     private String genChart;
 

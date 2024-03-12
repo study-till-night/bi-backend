@@ -26,7 +26,7 @@ spring:
     #       redis单机配置
     #      从0-15号数据库中进行选择
     database: 0
-    host: 192.168.234.128
+#    host: 192.168.234.128
     port: 6379
     password: 654160
     #      redis连接池
@@ -35,6 +35,7 @@ spring:
         enabled: true
         max-active: 4
         max-wait: -1
+    host: 112.124.32.84
   # Elasticsearch 配置
   # todo 需替换配置，然后取消注释
   #  elasticsearch:
@@ -48,10 +49,10 @@ spring:
       max-file-size: 10MB
     #  rabbitmq配置
   rabbitmq:
-    host: 192.168.234.128
-    port: 5673
+#    host: 192.168.234.128
+    port: 5672
     username: guest
-    password: guest
+    password: 654160
     virtual-host: /
     #    none -- 值是禁用发布确认模式，是默认值
     #    correlated -- 值是发布消息成功到交换器后会触发回调方法
@@ -61,6 +62,7 @@ spring:
     publisher-confirm-type: correlated
     #    是否允许消息回退
     publisher-returns: true
+    host: 112.124.32.84
 
 server:
   address: 0.0.0.0

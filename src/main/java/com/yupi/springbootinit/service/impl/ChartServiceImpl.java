@@ -13,7 +13,7 @@ import com.yupi.springbootinit.message.BiMessageProducer;
 import com.yupi.springbootinit.model.dto.chart.GenChartByAiRequest;
 import com.yupi.springbootinit.model.entity.Chart;
 import com.yupi.springbootinit.model.enums.ChartStatusEnum;
-import com.yupi.springbootinit.model.vo.AiResponseVo;
+import com.yupi.springbootinit.model.vo.AiResponseVO;
 import com.yupi.springbootinit.service.ChartService;
 import com.yupi.springbootinit.service.UserService;
 import com.yupi.springbootinit.utils.ExcelUtils;
@@ -60,7 +60,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
      */
     @Override
     @Transactional
-    public AiResponseVo getAiResult(MultipartFile excelData, GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
+    public AiResponseVO getAiResult(MultipartFile excelData, GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
         // 合法的文件后缀
         final List<String> VALID_SUFFIX = Arrays.asList("xlsx", "xls");
         // 检验文件
@@ -120,7 +120,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         // 设置60s超时
         completableFuture.orTimeout(60, TimeUnit.SECONDS).getNow(null);
         // 返回vo对象   不包含请求结果
-        return AiResponseVo.builder().chartId(chart.getId()).build();
+        return AiResponseVO.builder().chartId(chart.getId()).build();
     }
 
 
@@ -131,7 +131,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
      * @param genChartByAiRequest 用户请求体
      */
     @Override
-    public AiResponseVo getAiResultByMq(MultipartFile excelData, GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
+    public AiResponseVO getAiResultByMq(MultipartFile excelData, GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
         // 合法的文件后缀
         final List<String> VALID_SUFFIX = Arrays.asList("xlsx", "xls");
         // 检验文件
@@ -165,7 +165,7 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         Long chartId = chart.getId();
         biMessageProducer.sendMessage(chartId);
         // 返回vo对象   不包含请求结果
-        return AiResponseVo.builder().chartId(chartId).build();
+        return AiResponseVO.builder().chartId(chartId).build();
     }
 
     // 封装失败状态处理

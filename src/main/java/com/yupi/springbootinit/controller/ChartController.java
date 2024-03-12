@@ -15,7 +15,7 @@ import com.yupi.springbootinit.exception.ThrowUtils;
 import com.yupi.springbootinit.model.dto.chart.*;
 import com.yupi.springbootinit.model.entity.Chart;
 import com.yupi.springbootinit.model.entity.User;
-import com.yupi.springbootinit.model.vo.AiResponseVo;
+import com.yupi.springbootinit.model.vo.AiResponseVO;
 import com.yupi.springbootinit.service.ChartService;
 import com.yupi.springbootinit.service.UserService;
 import com.yupi.springbootinit.utils.SqlUtils;
@@ -32,8 +32,8 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * 图表接口
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author  shu
+ *  
  */
 @RestController
 @RequestMapping("/chart")
@@ -216,8 +216,8 @@ public class ChartController {
      * @return  结果
      */
     @PostMapping("/gen/async")
-    public BaseResponse<AiResponseVo> genAiChartByThread(@RequestPart("file") MultipartFile excelData,
-                                                   GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
+    public BaseResponse<AiResponseVO> genAiChartByThread(@RequestPart("file") MultipartFile excelData,
+                                                         GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
         // 参数非空判断
         ThrowUtils.throwIf(excelData == null, ErrorCode.PARAMS_ERROR, "未上传文件");
         ThrowUtils.throwIf(genChartByAiRequest == null, ErrorCode.PARAMS_ERROR);
@@ -239,8 +239,8 @@ public class ChartController {
      * @return  结果
      */
     @PostMapping("/gen/async/mq")
-    public BaseResponse<AiResponseVo> genAiChartByMq(@RequestPart("file") MultipartFile excelData,
-                                                   GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
+    public BaseResponse<AiResponseVO> genAiChartByMq(@RequestPart("file") MultipartFile excelData,
+                                                     GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
         // 参数非空判断
         ThrowUtils.throwIf(excelData == null, ErrorCode.PARAMS_ERROR, "未上传文件");
         ThrowUtils.throwIf(genChartByAiRequest == null, ErrorCode.PARAMS_ERROR);

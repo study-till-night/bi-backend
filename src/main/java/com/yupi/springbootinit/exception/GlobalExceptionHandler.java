@@ -16,8 +16,8 @@ import java.util.concurrent.TimeoutException;
 /**
  * 全局异常处理器
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @author  shu
+ *  
  */
 @RestControllerAdvice
 @Slf4j

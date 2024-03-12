@@ -1,15 +1,19 @@
 package com.yupi.springbootinit.service.impl;
 
+import cn.hutool.captcha.CaptchaUtil;
+import cn.hutool.captcha.CircleCaptcha;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.yupi.springbootinit.common.ErrorCode;
 import com.yupi.springbootinit.constant.CommonConstant;
 import com.yupi.springbootinit.exception.BusinessException;
+import com.yupi.springbootinit.exception.ThrowUtils;
 import com.yupi.springbootinit.mapper.UserMapper;
 import com.yupi.springbootinit.model.dto.user.UserQueryRequest;
 import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.model.enums.UserRoleEnum;
+import com.yupi.springbootinit.model.vo.CaptchaVO;
 import com.yupi.springbootinit.model.vo.LoginUserVO;
 import com.yupi.springbootinit.model.vo.UserVO;
 import com.yupi.springbootinit.service.UserService;
@@ -17,22 +21,22 @@ import com.yupi.springbootinit.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.yupi.springbootinit.constant.UserConstant.USER_CAPTCHA_ID;
 import static com.yupi.springbootinit.constant.UserConstant.USER_LOGIN_STATE;
 
-/**
- * 用户服务实现
- *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
- */
 @Service
 @Slf4j
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
@@ -42,6 +46,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     private static final String SALT = "yupi";
 
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+    /**
+     * 用户注册
+     *
+     * @param userAccount   用户账户
+     * @param userPassword  用户密码
+     * @param checkPassword 校验密码
+     * @return 新用户 id
+     */
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
         // 1. 校验
@@ -79,19 +93,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return user.getId();
         }
     }
-
+    /**
+     * 用户登录
+     *
+     * @param userAccount  用户账户
+     * @param userPassword 用户密码
+     * @param request
+     * @return 脱敏后的用户信息
+     */
     @Override
-    public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
+    public LoginUserVO userLogin(String userAccount, String userPassword, String userCaptchaId, String userCaptchaText, HttpServletRequest request) {
         // 1. 校验
         if (StringUtils.isAnyBlank(userAccount, userPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
         if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号错误");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号位数不得小于4位");
         }
         if (userPassword.length() < 8) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码错误");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码位数不得小于8位");
         }
+
+        String captchaText = stringRedisTemplate.opsForValue().get("captcha:" + userCaptchaId);
+        // 判断验证码是否失效
+        System.out.println(request.getSession().getAttribute(USER_CAPTCHA_ID));
+        ThrowUtils.throwIf(StringUtils.isEmpty(captchaText) || !request.getSession().getAttribute(USER_CAPTCHA_ID).equals(userCaptchaId), ErrorCode.PARAMS_ERROR, "验证码已失效");
+        // 判断验证码是否错误
+        ThrowUtils.throwIf(!captchaText.equals(userCaptchaText), ErrorCode.PARAMS_ERROR, "验证码错误");
+
         // 2. 加密
         String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
         // 查询用户是否存在
@@ -107,6 +136,31 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 3. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
         return this.getLoginUserVO(user);
+    }
+
+    /**
+     * 获取验证码
+     * @return
+     */
+    @Override
+    public CaptchaVO userGetCaptcha(String captchaId, HttpServletRequest request) {
+        // 创建一个图像验证码宽度为130，高度为48，包含4个字符，干扰线10个
+        CircleCaptcha circleCaptcha = CaptchaUtil.createCircleCaptcha(130, 48, 4, 10);
+        // 获取验证码的文本
+        String captchaText = circleCaptcha.getCode();
+        log.info(captchaText);
+        // 获取验证码图片的Base64编码
+        String captchaImageBase64Data = circleCaptcha.getImageBase64Data();
+        // 如果没有传入captchaId，则生成一个随机字符串作为captchaId
+        captchaId = Optional.ofNullable(captchaId).orElseGet(() -> UUID.randomUUID().toString());
+        // 保存验证码文本到Redis中，有效期30秒
+        stringRedisTemplate.opsForValue().set("captcha:" + captchaId, captchaText, 180, TimeUnit.SECONDS);
+        // 在session中设置最新验证码id
+        request.getSession().setAttribute(USER_CAPTCHA_ID, captchaId);
+        return CaptchaVO.builder()
+                .captchaId(captchaId)
+                .captchaImage(captchaImageBase64Data)
+                .build();
     }
 
     /**
