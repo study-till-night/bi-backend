@@ -6,6 +6,7 @@ import com.rabbitmq.client.Channel;
 import com.yupi.springbootinit.common.ErrorCode;
 import com.yupi.springbootinit.constant.MqConstant;
 import com.yupi.springbootinit.constant.redisKey.ChartBusinessKey;
+import com.yupi.springbootinit.websocket.MessageReminderServer;
 import com.yupi.springbootinit.exception.BusinessException;
 import com.yupi.springbootinit.manager.AIManager;
 import com.yupi.springbootinit.model.entity.Chart;
@@ -44,7 +45,7 @@ public class BiMessageConsumer {
      * @param chartId 图表id
      * @param channel 通道
      * @param tag     AcknowledgeMode.NONE：不确认 AcknowledgeMode.AUTO：自动确认 AcknowledgeMode.MANUAL：手动确认
-     *                                              todo 拒绝掉的任务会进入死信队列 可在死信队列中将图表状态修改为失败
+     *                                                             todo 拒绝掉的任务会进入死信队列 可在死信队列中将图表状态修改为失败
      */
     @RabbitListener(queues = {MqConstant.BI_QUEUE_NAME}, ackMode = "MANUAL")
     @Transactional
@@ -96,6 +97,9 @@ public class BiMessageConsumer {
         // 消息确认
         try {
             channel.basicAck(tag, false);
+            // 向客户端发送实时消息
+            //  todo    若连接已失效消息未发送成功 则将消息存入redis及数据库
+            MessageReminderServer.sendInfo("您有新的图表已完成 图表名称" + chart.getName(), chart.getUserId());
         } catch (IOException e) {
             log.error("生成图表任务时 消息确认失败");
         }
@@ -112,6 +116,14 @@ public class BiMessageConsumer {
         // 将图表状态设置为失败
         chartService.update(new LambdaUpdateWrapper<Chart>()
                 .eq(Chart::getId, chartId).set(Chart::getStatus, ChartStatusEnum.FAILED.getStatus()));
+        Chart chart = chartService.getById(chartId);
+        // 向用户发送任务失败消息提醒
+        try {
+            MessageReminderServer.sendInfo("您的图表处理失败 图表名称" + chart.getName(), chart.getUserId());
+        } catch (IOException e) {
+            log.error("发送实时消息提醒失败");
+        }
+
         // 将失败图表id存储到redis集合
         SetOperations<String, Object> setOperations = redisTemplate.opsForSet();
         setOperations.add(ChartBusinessKey.FAILED_LIST_KEY, chartId);

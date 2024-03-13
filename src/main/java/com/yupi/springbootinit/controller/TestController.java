@@ -1,26 +1,22 @@
 package com.yupi.springbootinit.controller;
 
+import com.yupi.springbootinit.constant.UserConstant;
+import com.yupi.springbootinit.websocket.MessageReminderServer;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 @RestController
 public class TestController {
 
     @GetMapping("/test")
-    public String  test(){
-        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-            try {
-                System.out.println("gagaga");
-                Thread.sleep(600000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        });
-        future.orTimeout(5, TimeUnit.SECONDS).getNow(null);
-        return "return";
+    public void test(HttpServletRequest request) {
+        try {
+            MessageReminderServer.sendInfo("发送msg", 1731666544179572737L);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
