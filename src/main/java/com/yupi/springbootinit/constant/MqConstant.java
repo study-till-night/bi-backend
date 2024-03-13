@@ -5,13 +5,13 @@ public interface MqConstant {
     String BI_EXCHANGE_NAME="bi_exchange";
 
     // 队列名称
-    String BI_QUEUE_NAME="bi_exchange";
+    String BI_QUEUE_NAME="bi_queue";
 
     // 死信交换机名称
     String BI_DEAD_EXCHANGE_NAME="bi_dead_exchange";
 
     // 死信队列名称
-    String BI_DEAD_QUEUE_NAME="bi_dead_exchange";
+    String BI_DEAD_QUEUE_NAME="bi_dead_queue";
 
     // 普通跳转路径
     String BI_ROUTING_KEY="bi_route";

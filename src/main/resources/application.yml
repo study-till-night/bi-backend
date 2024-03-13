@@ -63,6 +63,10 @@ spring:
     #    是否允许消息回退
     publisher-returns: true
     host: 112.124.32.84
+    listener:
+      simple:
+        retry:
+          initial-interval: 60000
 
 server:
   address: 0.0.0.0

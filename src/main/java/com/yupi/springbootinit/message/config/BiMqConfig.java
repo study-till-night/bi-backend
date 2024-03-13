@@ -19,6 +19,10 @@ public class BiMqConfig {
     @Bean("biBusinessQueue")
     public Queue biBusinessQueue(){
         HashMap<String, Object> params = new HashMap<>();
+        // 设置队列最大长度
+        params.put("x-max-length",20);
+        // 当消息溢出时 将新消息抛弃
+        params.put("x-overflow","reject-publish");
         //声明当前队列绑定的死信交换机
         params.put("x-dead-letter-exchange", MqConstant.BI_DEAD_EXCHANGE_NAME);
         //声明当前队列的死信路由 key
