@@ -1,165 +1,151 @@
-# SpringBoot 项目初始模板
+# SmartBrain智能BI平台
 
-> 作者：[shu](https://github.com/liyupi)
-> 仅分享于 [编程导航知识星球](https://yupi.icu)
+## 项目简介
 
-基于 Java SpringBoot 的项目初始模板，整合了常用框架和主流业务的示例代码。
+本项目是一款基于SpringBoot、MyBatis-Plus、Redis、Redission与RabbitMq构建的高效智能数据分析平台，通过集成先进的AIGC技术，实现了用户仅需上传原始数据和输入分析需求，即可自动产生高质量的可视化图表和分析结论，极大地降低了人力与硬件资源投入于数据分析工作的成本。
 
-只需 1 分钟即可完成内容网站的后端！！！大家还可以在此基础上快速开发自己的项目。
+## 示例图
+![img.png](images/img.png)
 
-[toc]
+![img.png](images/img1.png)
 
-## 模板特点
+## 技术栈
+- 后端框架：Spring Boot
+- ORM框架：MyBatis-Plus
+- 缓存中间件：Redis
+- 分布式工具：Redission
+- 消息队列：RabbitMq
+- 实时通讯：WebSocket
 
-### 主流框架 & 特性
+## 主要功能与关键技术
 
-- Spring Boot 2.7.x（贼新）
-- Spring MVC
-- MyBatis + MyBatis Plus 数据访问（开启分页）
-- Spring Boot 调试工具和项目处理器
-- Spring AOP 切面编程
-- Spring Scheduler 定时任务
-- Spring 事务注解
+- **智能分析引擎**：借助LLM（Large Language Model）API接口，后台预设Prompt模版，结合用户提供的数据和分析诉求，封装请求并发送至LLM模型以获得固定格式的回答。解析返回结果，将其转化为Echarts图表渲染代码及对应分析结论，展示于前端界面。
 
-### 数据存储
+- **分布式限流保护**：利用Redisson的RateLimiter实现针对单一用户发起大量分析请求的分布式限流策略，有效防止恶意占用系统资源，保证服务稳定性。
 
-- MySQL 数据库
-- Redis 内存数据库
-- Elasticsearch 搜索引擎
-- 腾讯云 COS 对象存储
+- **消息队列任务调度**：
+    - **任务异步处理**：所有数据分析任务通过RabbitMQ接收和持久化，消费端采用手动确认机制，实现任务处理的异步化。
+  
+    - **故障转移与恢复**：对于未能成功消费的任务，系统将其转入死信队列统一处理，状态标识为“失败”，并将失败任务ID存储至Redis缓存，便于后续追踪和重试。
 
-### 工具类
+- **定时任务与错误重试**：利用Spring Scheduler设定定时任务，从Redis缓存和MySQL数据库中检索失败的任务。通过Redisson的分布式锁机制确保任务重新提交到消息队列的幂等性，避免重复处理。
 
-- Easy Excel 表格处理
-- Hutool 工具库
-- Gson 解析库
-- Apache Commons Lang3 工具类
-- Lombok 注解
-
-### 业务特性
-
-- Spring Session Redis 分布式登录
-- 全局请求响应拦截器（记录日志）
-- 全局异常处理器
-- 自定义错误码
-- 封装通用响应类
-- Swagger + Knife4j 接口文档
-- 自定义权限注解 + 全局校验
-- 全局跨域处理
-- 长整数丢失精度解决
-- 多环境配置
+- **实时反馈与通知**：为了提供良好的用户体验，平台集成了WebSocket技术，用于实时推送任务进度更新，无论任务完成或失败，都能即时通知用户。
 
 
-## 业务功能
+---
 
-- 提供示例 SQL（用户、帖子、帖子点赞、帖子收藏表）
-- 用户登录、注册、注销、更新、检索、权限管理
-- 帖子创建、删除、编辑、更新、数据库检索、ES 灵活检索
-- 帖子点赞、取消点赞
-- 帖子收藏、取消收藏、检索已收藏帖子
-- 帖子全量同步 ES、增量同步 ES 定时任务
-- 支持微信开放平台登录
-- 支持微信公众号订阅、收发消息、设置菜单
-- 支持分业务的文件上传
-
-### 单元测试
-
-- JUnit5 单元测试
-- 示例单元测试类
-
-### 架构设计
-
-- 合理分层
-
-
-## 快速上手
-
-> 所有需要修改的地方鱼皮都标记了 `todo`，便于大家找到修改的位置~
-
-### MySQL 数据库
-
-1）修改 `application.yml` 的数据库配置为你自己的：
-
-```yml
-spring:
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/my_db
-    username: root
-    password: 123456
-```
-
-2）执行 `sql/create_table.sql` 中的数据库语句，自动创建库表
-
-3）启动项目，访问 `http://localhost:8101/api/doc.html` 即可打开接口文档，不需要写前端就能在线调试接口了~
-
-![](doc/swagger.png)
-
-### Redis 分布式登录
-
-1）修改 `application.yml` 的 Redis 配置为你自己的：
-
-```yml
-spring:
-  redis:
-    database: 1
-    host: localhost
-    port: 6379
-    timeout: 5000
-    password: 123456
-```
-
-2）修改 `application.yml` 中的 session 存储方式：
-
-```yml
-spring:
-  session:
-    store-type: redis
-```
-
-3）移除 `MainApplication` 类开头 `@SpringBootApplication` 注解内的 exclude 参数：
-
-修改前：
-
+##  核心业务逻辑代码
 ```java
-@SpringBootApplication(exclude = {RedisAutoConfiguration.class})
+
+    /*
+      service实现类 使用MQ异步获取ai回复
+     
+      @param excelData           excel数据
+     * @param genChartByAiRequest 用户请求体
+     */
+    @Override
+    public AiResponseVO getAiResultByMq(MultipartFile excelData, GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
+        // 合法的文件后缀
+        final List<String> VALID_SUFFIX = Arrays.asList("xlsx", "xls");
+        // 检验文件
+        String filename = excelData.getOriginalFilename();
+        String fileType = FileUtil.getSuffix(filename);
+        // 不是合法后缀 返回空
+        ThrowUtils.throwIf(!VALID_SUFFIX.contains(fileType), ErrorCode.PARAMS_ERROR, "文件类型不符合要求");
+
+        Long userId = userService.getLoginUser(request).getId();
+        //  进行限流
+        ThrowUtils.throwIf(!limiterManager.doRateLimit(LimiterKey.GEN_CHART_LIMITER + userId), ErrorCode.TOO_MANY_REQUESTS);
+
+        // 压缩后的csv字符串
+        String csvStr = ExcelUtils.excelToCsv(excelData);
+        ThrowUtils.throwIf(csvStr == null, ErrorCode.PARAMS_ERROR, "上传文件失败");
+
+        String name = genChartByAiRequest.getName();
+        String goal = genChartByAiRequest.getGoal();
+        String chartType = genChartByAiRequest.getChartType();
+        //  异步流程    先将生成的图表保存到数据库
+        Chart chart = Chart.builder().chartData(csvStr)
+                .chartType(chartType)
+                .userId(userId)
+                .goal(goal)
+                .name(name)
+                .build();
+        boolean saveRes = this.save(chart); //  保存后mybatis会将主键赋值给对象id属性
+        ThrowUtils.throwIf(!saveRes, ErrorCode.SYSTEM_ERROR);
+
+        // 开始真正执行任务 将任务提交给MQ 传递图表id
+        Long chartId = chart.getId();
+        biMessageProducer.sendMessage(chartId);
+        // 返回vo对象   不包含请求结果
+        return AiResponseVO.builder().chartId(chartId).build();
+    }
+
 ```
-
-修改后：
-
-
+---
 ```java
-@SpringBootApplication
-```
+    /*
+      处理图表生成任务的消费者
+     
+      @param chartId 图表id
+     * @param channel 通道
+     * @param tag     AcknowledgeMode.NONE：不确认 AcknowledgeMode.AUTO：自动确认 AcknowledgeMode.MANUAL：手动确认
+                                                                  
+     */
+    @RabbitListener(queues = {MqConstant.BI_QUEUE_NAME}, ackMode = "MANUAL")
+    @Transactional
+    public void consumeChartGenTask(Long chartId, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long tag) {
+        // 获取图表id
+        if (ObjectUtils.isEmpty(chartId)) {
+            handleAckReject(channel, tag, false, false, "生成图表任务时 消息拒绝失败");
+        }
+        // 获取先前存入数据库的图表
+        Chart chart = chartService.getById(chartId);
+        if (ObjectUtils.isEmpty(chart)) {
+            handleAckReject(channel, tag, false, false, "生成图表任务时 消息拒绝失败");
+            return;
+        }
+        // 对图表状态修改为’执行中‘
+        boolean updateRes = chartService.update(new UpdateWrapper<Chart>().eq("id", chart.getId()).set("status", ChartStatusEnum.RUNNING.getStatus()));
+        if (!updateRes) {
+            handleAckReject(channel, tag, false, false, "生成图表任务时 消息拒绝失败");
+            return;
+        }
+        String goal = chart.getGoal();
+        String chartData = chart.getChartData();
+        String chartType = chart.getChartType();
+        // 拼接用户发送给ai的请求
+        String userMessage = "分析需求:\n" +
+                String.format("%s,请使用%s\n", goal, chartType) +
+                "原始数据:\n" +
+                chartData + "\n";
+        // 得到AI回复
+        String response = aiManager.doChat(userMessage);
+        // 进行分割
+        String[] splitResponse = response.split("【【【【【");
+        if (splitResponse.length != 3) {
+            handleAckReject(channel, tag, false, false, "生成图表任务时 消息拒绝失败");
+            return;
+        }
+        String chartCode = splitResponse[1].trim(); //  echarts代码
+        String genConclusion = splitResponse[2].trim(); //  结论
+        // 进行更新
+        boolean execRes = chartService.update(new UpdateWrapper<Chart>().eq("id", chart.getId())
+                .set("status", ChartStatusEnum.SUCCEED.getStatus()).set("genChart", chartCode).set("genResult", genConclusion));
+        if (!execRes) {
+            handleAckReject(channel, tag, false, false, "生成图表任务时 消息拒绝失败");
+            return;
+        }
+        // 消息确认
+        try {
+            channel.basicAck(tag, false);
+            // 向客户端发送实时消息
+            //  todo    若连接已失效 消息未发送成功 则将消息存入redis及数据库
+            MessageReminderServer.sendInfo("您有新的图表已完成 图表名称" + chart.getName(), chart.getUserId());
+        } catch (IOException e) {
+            log.error("生成图表任务时 消息确认失败");
+        }
+    }
 
-### Elasticsearch 搜索引擎
-
-1）修改 `application.yml` 的 Elasticsearch 配置为你自己的：
-
-```yml
-spring:
-  elasticsearch:
-    uris: http://localhost:9200
-    username: root
-    password: 123456
-```
-
-2）复制 `sql/post_es_mapping.json` 文件中的内容，通过调用 Elasticsearch 的接口或者 Kibana Dev Tools 来创建索引（相当于数据库建表）
-
-```
-PUT post_v1
-{
- 参数见 sql/post_es_mapping.json 文件
-}
-```
-
-这步不会操作的话需要补充下 Elasticsearch 的知识，或者自行百度一下~
-
-3）开启同步任务，将数据库的帖子同步到 Elasticsearch
-
-找到 job 目录下的 `FullSyncPostToEs` 和 `IncSyncPostToEs` 文件，取消掉 `@Component` 注解的注释，再次执行程序即可触发同步：
-
-```java
-// todo 取消注释开启任务
-//@Component
 ```
